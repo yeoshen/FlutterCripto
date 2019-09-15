@@ -3,20 +3,36 @@ import 'package:flutter_sparkline/flutter_sparkline.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:flutter_circular_chart/flutter_circular_chart.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() => runApp(MyApp());
 
+String d1 = '2019-01-01';
+String d2 = '2019-12-31';
+final url =
+    'https://api.coindesk.com/v1/bpi/historical/close.json?start=$d1&end=$d2';
+
+getData(String url) async {
+  List<double> datos;
+  await http.get(url).then((res) {
+    datos = jsonDecode(res.body)['bpi'].values.toList().cast<double>();
+  });
+  return datos;
+}
+
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
-        primaryColor: Color(0xffff6101),
+        primaryColor: Colors.indigo,
       ),
-      home: MyHomePage(title: 'Sales Dashboard 2018'),
+      home: MyHomePage(title: 'Criptomonedas'),
     );
   }
 }
@@ -31,53 +47,57 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  var data = [0.0, 1.0, 1.5, 2.0, 0.0, 0.0, -0.5, -1.0, -0.5, 0.0, 0.0];
-  var data1 = [0.0,-2.0,3.5,-2.0,0.5,0.7,0.8,1.0,2.0,3.0,3.2];
+  //var data = getHttpRequest(url3);
+
+  var data1 = [0.0, 2.0, 3.5, -2.0, 0.5, 0.7, 0.8, 1.0, 2.0, 3.0, 3.2];
 
   List<CircularStackEntry> circularData = <CircularStackEntry>[
     new CircularStackEntry(
       <CircularSegmentEntry>[
-        new CircularSegmentEntry(700.0, Color(0xff4285F4), rankKey: 'Q1'),
+        new CircularSegmentEntry(1000.0, Color(0xff4285F4), rankKey: 'Q1'),
         new CircularSegmentEntry(1000.0, Color(0xfff3af00), rankKey: 'Q2'),
-        new CircularSegmentEntry(1800.0, Color(0xffec3337), rankKey: 'Q3'),
+        new CircularSegmentEntry(1000.0, Color(0xffec3337), rankKey: 'Q3'),
         new CircularSegmentEntry(1000.0, Color(0xff40b24b), rankKey: 'Q4'),
       ],
       rankKey: 'Quarterly Profits',
     ),
   ];
 
-  Material myTextItems(String title, String subtitle){
+  Material myTextItems(String title, String subtitle) {
     return Material(
       color: Colors.white,
       elevation: 14.0,
       borderRadius: BorderRadius.circular(24.0),
       shadowColor: Color(0x802196F3),
       child: Center(
-        child:Padding(
+        child: Padding(
           padding: EdgeInsets.all(8.0),
           child: Row(
-            mainAxisAlignment:MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Column(
-                mainAxisAlignment:MainAxisAlignment.center,
-               children: <Widget>[
-
-                  Padding(
-                   padding: EdgeInsets.all(8.0),
-                      child:Text(title,style:TextStyle(
-                        fontSize: 20.0,
-                        color: Colors.blueAccent,
-                      ),),
-                    ),
-
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
                   Padding(
                     padding: EdgeInsets.all(8.0),
-                    child:Text(subtitle,style:TextStyle(
-                      fontSize: 30.0,
-                    ),),
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        color: Colors.blueAccent,
+                      ),
+                    ),
                   ),
-
-               ],
+                  Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 30.0,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -86,47 +106,48 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-
-  Material myCircularItems(String title, String subtitle){
+  Material myCircularItems(String title, String subtitle) {
     return Material(
       color: Colors.white,
       elevation: 14.0,
-      borderRadius: BorderRadius.circular(24.0),
+      borderRadius: BorderRadius.circular(25.0),
       shadowColor: Color(0x802196F3),
       child: Center(
-        child:Padding(
+        child: Padding(
           padding: EdgeInsets.all(8.0),
           child: Row(
-            mainAxisAlignment:MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Column(
-                mainAxisAlignment:MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-
                   Padding(
                     padding: EdgeInsets.all(8.0),
-                    child:Text(title,style:TextStyle(
-                      fontSize: 20.0,
-                      color: Colors.blueAccent,
-                    ),),
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        color: Colors.blueAccent,
+                      ),
+                    ),
                   ),
-
                   Padding(
                     padding: EdgeInsets.all(8.0),
-                    child:Text(subtitle,style:TextStyle(
-                      fontSize: 30.0,
-                    ),),
+                    child: Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 30.0,
+                      ),
+                    ),
                   ),
-
                   Padding(
-                    padding:EdgeInsets.all(8.0),
-                    child:AnimatedCircularChart(
+                    padding: EdgeInsets.all(8.0),
+                    child: AnimatedCircularChart(
                       size: const Size(100.0, 100.0),
                       initialChartData: circularData,
                       chartType: CircularChartType.Pie,
                     ),
                   ),
-
                 ],
               ),
             ],
@@ -136,8 +157,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-
-  Material mychart1Items(String title, String priceVal,String subtitle) {
+  Material mychart1Items(String title, String priceVal, String subtitle) {
     return Material(
       color: Colors.white,
       elevation: 14.0,
@@ -152,39 +172,52 @@ class _MyHomePageState extends State<MyHomePage> {
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-
                   Padding(
                     padding: EdgeInsets.all(1.0),
-                    child: Text(title, style: TextStyle(
-                      fontSize: 20.0,
-                      color: Colors.blueAccent,
-                    ),),
-                  ),
-
-                  Padding(
-                    padding: EdgeInsets.all(1.0),
-                    child: Text(priceVal, style: TextStyle(
-                      fontSize: 30.0,
-                    ),),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(1.0),
-                    child: Text(subtitle, style: TextStyle(
-                      fontSize: 20.0,
-                      color: Colors.blueGrey,
-                    ),),
-                  ),
-
-                  Padding(
-                    padding: EdgeInsets.all(1.0),
-                    child: new Sparkline(
-                      data: data,
-                      lineColor: Color(0xffff6101),
-                      pointsMode: PointsMode.all,
-                      pointSize: 8.0,
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        color: Colors.blueAccent,
+                      ),
                     ),
                   ),
-
+                  Padding(
+                    padding: EdgeInsets.all(1.0),
+                    child: Text(
+                      priceVal,
+                      style: TextStyle(
+                        fontSize: 30.0,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(1.0),
+                    child: Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        color: Colors.blueGrey,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                      padding: EdgeInsets.all(1.0),
+                      child: FutureBuilder(
+                        future: getData(url),
+                        builder:
+                            (BuildContext context, AsyncSnapshot snapshot) {
+                          if (snapshot.hasError) print(snapshot.error);
+                          return snapshot.hasData
+                              ? Sparkline(
+                                  data: snapshot.data,
+                                  lineColor: Color(0xffff6101),
+                                  pointsMode: PointsMode.all,
+                                  pointSize: 8.0,
+                                )
+                              : new CircularProgressIndicator();
+                        },
+                      )),
                 ],
               ),
             ],
@@ -194,8 +227,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-
-  Material mychart2Items(String title, String priceVal,String subtitle) {
+  Material mychart2Items(String title, String priceVal, String subtitle) {
     return Material(
       color: Colors.white,
       elevation: 14.0,
@@ -210,29 +242,35 @@ class _MyHomePageState extends State<MyHomePage> {
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-
                   Padding(
                     padding: EdgeInsets.all(1.0),
-                    child: Text(title, style: TextStyle(
-                      fontSize: 20.0,
-                      color: Colors.blueAccent,
-                    ),),
-                  ),
-
-                  Padding(
-                    padding: EdgeInsets.all(1.0),
-                    child: Text(priceVal, style: TextStyle(
-                      fontSize: 30.0,
-                    ),),
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        color: Colors.blueAccent,
+                      ),
+                    ),
                   ),
                   Padding(
                     padding: EdgeInsets.all(1.0),
-                    child: Text(subtitle, style: TextStyle(
-                      fontSize: 20.0,
-                      color: Colors.blueGrey,
-                    ),),
+                    child: Text(
+                      priceVal,
+                      style: TextStyle(
+                        fontSize: 30.0,
+                      ),
+                    ),
                   ),
-
+                  Padding(
+                    padding: EdgeInsets.all(1.0),
+                    child: Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        color: Colors.blueGrey,
+                      ),
+                    ),
+                  ),
                   Padding(
                     padding: EdgeInsets.all(1.0),
                     child: new Sparkline(
@@ -254,59 +292,61 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: Icon(Icons.menu), onPressed: () {
-          //
-        }),
+        leading: IconButton(
+            icon: Icon(Icons.menu),
+            onPressed: () {
+              //
+            }),
         title: Text(widget.title),
         actions: <Widget>[
-          IconButton(icon: Icon(
-              FontAwesomeIcons.chartLine), onPressed: () {
-            //
-          }),
+          IconButton(
+              icon: Icon(FontAwesomeIcons.chartLine),
+              onPressed: () {
+                //
+              }),
         ],
       ),
-      body:Container(
-          color:Color(0xffE5E5E5),
-          child:StaggeredGridView.count(
-            crossAxisCount: 4,
-           crossAxisSpacing: 12.0,
+      body: Container(
+        color: Color(0xffE5E5E5),
+        child: StaggeredGridView.count(
+          crossAxisCount: 4,
+          crossAxisSpacing: 12.0,
           mainAxisSpacing: 12.0,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: mychart1Items("Sales by Month","421.3M","+12.9% of target"),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: myCircularItems("Quarterly Profits","68.7M"),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right:8.0),
-            child: myTextItems("Mktg. Spend","48.6M"),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right:8.0),
-            child: myTextItems("Users","25.5M"),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: mychart2Items("Conversion","0.9M","+19% of target"),
-          ),
-
-        ],
-        staggeredTiles: [
-          StaggeredTile.extent(4, 250.0),
-          StaggeredTile.extent(2, 250.0),
-          StaggeredTile.extent(2, 120.0),
-          StaggeredTile.extent(2, 120.0),
-          StaggeredTile.extent(4, 250.0),
-        ],
-      ),
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child:
+                  mychart1Items("Bitcoin history chart", "421.3M", "+12.9% of target"),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(5.0),
+              child: myCircularItems("Quarterly Prof", "68.7M"),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: myTextItems("Mktg. Spend", "48.6M"),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: myTextItems("Users", "25.5M"),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: mychart2Items("Conversion", "0.9M", "+19% of target"),
+            ),
+          ],
+          staggeredTiles: [
+            StaggeredTile.extent(4, 250.0),
+            StaggeredTile.extent(2, 250.0),
+            StaggeredTile.extent(2, 120.0),
+            StaggeredTile.extent(2, 120.0),
+            StaggeredTile.extent(4, 250.0),
+          ],
+        ),
       ),
     );
   }
