@@ -6,7 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 //import 'package:cached_network_image/cached_network_image.dart';
-import 'package:transparent_image/transparent_image.dart';
+//import 'package:transparent_image/transparent_image.dart';
 //import 'package:catcher/catcher_plugin.dart';
 
 void main() => runApp(MyApp());
@@ -75,33 +75,40 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  getImageInternet(String symbol) {
-    try {
-      return FadeInImage.memoryNetwork(
-        placeholder: kTransparentImage,
-        image: 'https://cryptoicons.org/api/icon/$symbol/100',
+  buscarIconCurrency(String symbol) async {
+    final res = await http.get('https://cryptoicons.org/api/icon/$symbol/100');
+    if (res.statusCode == 200) {
+      return Image.network(
+        'https://cryptoicons.org/api/icon/$symbol/100',
       );
-    } on Exception {
-      return Icon( Icons.error);
+    } else {
+      return Icon(
+        Icons.error,
+        size: 50,
+      );
     }
   }
 
+  String roundDouble(double num, int dec) => num.toStringAsFixed(dec);
+
   Widget PreciosMonedas(String symbol) => ListView.builder(
-        itemCount: datosMonedas == null ? 0 : datosMonedas.length,
+        itemCount: datosMonedas == null ? 0 : 10, //datosMonedas.length,
         itemBuilder: (BuildContext context, int index) {
           return Container(
             margin: EdgeInsets.only(top: 0, bottom: 15),
             height: 60,
             width: 60,
             child: ListTile(
-              leading: getImageInternet(symbol),
-              //Image.network('https://cryptoicons.org/api/icon/$symbol/100'),
-
-              // leading: CachedNetworkImage(
-              //   imageUrl: 'https://cryptoicons.org/api/icon/$symbol/100',
-              //   placeholder:  (context, imageUrl) => CircularProgressIndicator(),
-              //   errorWidget: (context, url, error) => new Icon(Icons.error),
-              // ),
+              leading: FutureBuilder(
+                future: buscarIconCurrency(
+                    datosMonedas[index]['symbol'].toString().toLowerCase()),
+                builder: (BuildContext context, AsyncSnapshot snapshot) {
+                  if (snapshot.hasError) print(snapshot.error);
+                  return snapshot.hasData
+                      ? snapshot.data
+                      : new CircularProgressIndicator();
+                },
+              ),
               title: Text(
                 datosMonedas[index]['name'],
                 textAlign: TextAlign.center,
@@ -111,14 +118,14 @@ class _MyHomePageState extends State<MyHomePage> {
                     fontWeight: FontWeight.w600),
               ),
               subtitle: Text(
-                datosMonedas[index]['quote']['USD']['price'].toString(),
+                roundDouble(datosMonedas[index]['quote']['USD']['price'],3)
+                    .toString(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     color: Colors.blueAccent,
                     fontSize: 18,
                     fontWeight: FontWeight.w600),
               ),
-              //trailing: botonMensaje(context, index),
             ),
           );
         },
@@ -477,7 +484,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   AsyncSnapshot snapshot) {
                                 if (snapshot.hasError) print(snapshot.error);
                                 return snapshot.hasData
-                                    ? PreciosMonedas('iota')
+                                    ? PreciosMonedas('btc')
                                     : new CircularProgressIndicator();
                               },
                             ),
