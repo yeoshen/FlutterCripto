@@ -5,21 +5,11 @@ import 'package:flutter_circular_chart/flutter_circular_chart.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+//import 'package:cached_network_image/cached_network_image.dart';
+import 'package:transparent_image/transparent_image.dart';
+//import 'package:catcher/catcher_plugin.dart';
 
 void main() => runApp(MyApp());
-
-String d1 = '2019-01-01';
-String d2 = '2019-12-31';
-final url =
-    'https://api.coindesk.com/v1/bpi/historical/close.json?start=$d1&end=$d2';
-
-getData(String url) async {
-  List<double> datos;
-  await http.get(url).then((res) {
-    datos = jsonDecode(res.body)['bpi'].values.toList().cast<double>();
-  });
-  return datos;
-}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -47,7 +37,98 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  //var data = getHttpRequest(url3);
+  var datosGrafico;
+  var datosMonedas;
+
+  DateTime _dateTime = DateTime.now();
+  String d1 = '2019-01-01';
+  String d2 = '2019-12-31';
+
+  getData(String dateStart, String dateEnd) async {
+    final dateS = dateStart.substring(0, 10);
+    final dateF = dateEnd.substring(0, 10);
+    final url =
+        'https://api.coindesk.com/v1/bpi/historical/close.json?start=$dateS&end=$dateF';
+
+    List<double> datos;
+    await http.get(url).then((res) {
+      datos = jsonDecode(res.body)['bpi'].values.toList().cast<double>();
+    });
+    return datos;
+  }
+
+  getCoinPrices() async {
+    var _body;
+    final url =
+        'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
+    await http.get(url, headers: {
+      'X-CMC_PRO_API_KEY': '71357ff9-6340-4d3e-98be-9fde07fea604'
+    }).then((res) {
+      _body = jsonDecode(res.body)['data'];
+    });
+    return datosMonedas = _body;
+  }
+
+  buscarDatosWeb(String dateStart, String dateEnd) {
+    setState(() {
+      datosGrafico = getData(dateStart, dateEnd);
+    });
+  }
+
+  getImageInternet(String symbol) {
+    try {
+      return FadeInImage.memoryNetwork(
+        placeholder: kTransparentImage,
+        image: 'https://cryptoicons.org/api/icon/$symbol/100',
+      );
+    } catch (error) {
+      return Icon( Icons.error);
+    }
+  }
+
+  Widget PreciosMonedas(String symbol) => ListView.builder(
+        itemCount: datosMonedas == null ? 0 : datosMonedas.length,
+        itemBuilder: (BuildContext context, int index) {
+          return Container(
+            margin: EdgeInsets.only(top: 0, bottom: 15),
+            height: 60,
+            width: 60,
+            child: ListTile(
+              leading: getImageInternet(symbol),
+              //Image.network('https://cryptoicons.org/api/icon/$symbol/100'),
+
+              // leading: CachedNetworkImage(
+              //   imageUrl: 'https://cryptoicons.org/api/icon/$symbol/100',
+              //   placeholder:  (context, imageUrl) => CircularProgressIndicator(),
+              //   errorWidget: (context, url, error) => new Icon(Icons.error),
+              // ),
+              title: Text(
+                datosMonedas[index]['name'],
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: Colors.indigo,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                datosMonedas[index]['quote']['USD']['price'].toString(),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: Colors.blueAccent,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600),
+              ),
+              //trailing: botonMensaje(context, index),
+            ),
+          );
+        },
+      );
+
+  @override
+  void initState() {
+    super.initState();
+    buscarDatosWeb(d1, d2);
+  }
 
   var data1 = [0.0, 2.0, 3.5, -2.0, 0.5, 0.7, 0.8, 1.0, 2.0, 3.0, 3.2];
 
@@ -187,7 +268,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: Text(
                       priceVal,
                       style: TextStyle(
-                        fontSize: 30.0,
+                        fontSize: 12.0,
                       ),
                     ),
                   ),
@@ -204,7 +285,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   Padding(
                       padding: EdgeInsets.all(1.0),
                       child: FutureBuilder(
-                        future: getData(url),
+                        future: datosGrafico,
                         builder:
                             (BuildContext context, AsyncSnapshot snapshot) {
                           if (snapshot.hasError) print(snapshot.error);
@@ -299,54 +380,141 @@ class _MyHomePageState extends State<MyHomePage> {
         leading: IconButton(
             icon: Icon(Icons.menu),
             onPressed: () {
-              //
+              buscarDatosWeb('2019-09-01', '2019-09-30');
             }),
         title: Text(widget.title),
         actions: <Widget>[
           IconButton(
-              icon: Icon(FontAwesomeIcons.chartLine),
-              onPressed: () {
-                //
-              }),
+            icon: Icon(FontAwesomeIcons.chartLine),
+            onPressed: () {
+              showDatePicker(
+                      context: context,
+                      initialDate:
+                          _dateTime == null ? DateTime.now() : _dateTime,
+                      firstDate: DateTime(2001),
+                      lastDate: DateTime(2021))
+                  .then((date) {
+                setState(() {
+                  _dateTime = date;
+                  buscarDatosWeb('2019-08-01', _dateTime.toString());
+                });
+              });
+            },
+          ),
         ],
       ),
       body: Container(
         color: Color(0xffE5E5E5),
-        child: StaggeredGridView.count(
-          crossAxisCount: 4,
-          crossAxisSpacing: 12.0,
-          mainAxisSpacing: 12.0,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child:
-                  mychart1Items("Bitcoin history chart", "421.3M", "+12.9% of target"),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(5.0),
-              child: myCircularItems("Quarterly Prof", "68.7M"),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: myTextItems("Mktg. Spend", "48.6M"),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: myTextItems("Users", "25.5M"),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: mychart2Items("Conversion", "0.9M", "+19% of target"),
-            ),
-          ],
-          staggeredTiles: [
-            StaggeredTile.extent(4, 250.0),
-            StaggeredTile.extent(2, 250.0),
-            StaggeredTile.extent(2, 120.0),
-            StaggeredTile.extent(2, 120.0),
-            StaggeredTile.extent(4, 250.0),
-          ],
-        ),
+        child: GestureDetector(
+            onTap: () {
+              print('presiono tap = ${DateTime.now()}');
+            },
+            onPanDown: (DragDownDetails details) {
+              print("parent PanDown = ${DateTime.now()}");
+            },
+            onVerticalDragEnd: (DragEndDetails details) {
+              print("parent VerticalDragEnd = ${DateTime.now()}");
+            },
+            onVerticalDragDown: (DragDownDetails details) {
+              print("parent VerticalDragDown = ${DateTime.now()}");
+            },
+            onDoubleTap: () {
+              print('Doble Tap');
+              buscarDatosWeb(d1, d2);
+            },
+            onTapUp: (TapUpDetails details) {
+              print("parent tapup = ${DateTime.now()}");
+            },
+            onTapDown: (TapDownDetails details) {
+              print("parent tapdown = ${DateTime.now()}");
+            },
+            child: StaggeredGridView.count(
+              crossAxisCount: 4,
+              crossAxisSpacing: 12.0,
+              mainAxisSpacing: 12.0,
+              children: <Widget>[
+                Padding(
+                    padding: const EdgeInsets.all(5.0),
+                    child: Material(
+                      color: Colors.white,
+                      elevation: 14.0,
+                      borderRadius: BorderRadius.circular(24.0),
+                      shadowColor: Color(0x802196F3),
+                      child: Stack(
+                        children: <Widget>[
+                          Container(
+                            color: Colors.indigo[900],
+                            child: ListTile(
+                              leading: Icon(
+                                FontAwesomeIcons.chartLine,
+                                color: Colors.white,
+                                size: 50,
+                              ),
+                              title: Text(
+                                "Cryptos",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 20),
+                                textAlign: TextAlign.right,
+                              ),
+                              subtitle: Text(
+                                "Price in USD",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 18),
+                                textAlign: TextAlign.right,
+                              ),
+                            ),
+                          ),
+
+                          Container(
+                            margin: EdgeInsets.only(top: 70),
+                            child: FutureBuilder(
+                              future: getCoinPrices(),
+                              builder: (BuildContext context,
+                                  AsyncSnapshot snapshot) {
+                                if (snapshot.hasError) print(snapshot.error);
+                                return snapshot.hasData
+                                    ? PreciosMonedas('sss')
+                                    : new CircularProgressIndicator();
+                              },
+                            ),
+                          ), //myCircularItems("Ethereum", "68.7M"),
+                        ],
+                      ),
+                    )),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: mychart1Items(
+                      "Bitcoin history chart",
+                      _dateTime == null
+                          ? 'Nothing has been picked yet'
+                          : _dateTime.toString(),
+                      "+12.9% of target"),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: mychart2Items("Conversion", "0.9M", "+19% of target"),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: myTextItems("Mktg. Spend", "48.6M"),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: myTextItems("Users", "25.5M"),
+                ),
+              ],
+              staggeredTiles: [
+                StaggeredTile.extent(4, 400.0),
+                StaggeredTile.extent(4, 250.0),
+                StaggeredTile.extent(4, 250.0),
+                StaggeredTile.extent(4, 120.0),
+                StaggeredTile.extent(4, 120.0),
+              ],
+            )),
       ),
     );
   }

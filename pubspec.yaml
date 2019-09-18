@@ -24,6 +24,10 @@ dependencies:
   flutter_circular_chart: ^0.1.0
   font_awesome_flutter: ^8.2.0
   http: any
+  transparent_image:
+  #catcher:
+  #cached_network_image:
+  #flutter_image:
 
 dev_dependencies:
   flutter_test:
