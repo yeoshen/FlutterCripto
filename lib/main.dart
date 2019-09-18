@@ -81,7 +81,7 @@ class _MyHomePageState extends State<MyHomePage> {
         placeholder: kTransparentImage,
         image: 'https://cryptoicons.org/api/icon/$symbol/100',
       );
-    } catch (error) {
+    } on Exception {
       return Icon( Icons.error);
     }
   }
@@ -477,7 +477,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   AsyncSnapshot snapshot) {
                                 if (snapshot.hasError) print(snapshot.error);
                                 return snapshot.hasData
-                                    ? PreciosMonedas('sss')
+                                    ? PreciosMonedas('iota')
                                     : new CircularProgressIndicator();
                               },
                             ),
