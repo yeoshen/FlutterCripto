@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_sparkline/flutter_sparkline.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -43,18 +45,41 @@ class _MyHomePageState extends State<MyHomePage> {
   DateTime _dateTime = DateTime.now();
   String d1 = '2019-01-01';
   String d2 = '2019-12-31';
+  double priceCurrency;
+  double priceDolar;
+  double priceEuro;
+
+  @override
+  void initState() {
+    super.initState();
+
+    buscarDatosWeb(d1, d2);
+    buscaPrecios();
+  }
+
+  buscaPrecios() async {
+    priceDolar = await getPriceCurrency("USD", "MXN");
+    priceEuro = await getPriceCurrency("EUR", "MXN");
+  }
 
   getData(String dateStart, String dateEnd) async {
     final dateS = dateStart.substring(0, 10);
     final dateF = dateEnd.substring(0, 10);
     final url =
         'https://api.coindesk.com/v1/bpi/historical/close.json?start=$dateS&end=$dateF';
-
     List<double> datos;
     await http.get(url).then((res) {
       datos = jsonDecode(res.body)['bpi'].values.toList().cast<double>();
     });
     return datos;
+  }
+
+  Future<double> getPriceCurrency(String source, String target) async {
+    String url =
+        'https://api.cambio.today/v1/quotes/$source/$target/json?quantity=1&key=2380|^Rc0uqBMrcPSMcowjqTP7PJxEu*~UFdU';
+    final res = await http.get(url);
+    final _dato = jsonDecode(res.body);
+    return _dato['result']['value'] as double;
   }
 
   getCoinPrices() async {
@@ -84,7 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
     } else {
       return Icon(
         Icons.error,
-        size: 50,
+        size: 60,
       );
     }
   }
@@ -92,7 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String roundDouble(double num, int dec) => num.toStringAsFixed(dec);
 
   Widget PreciosMonedas(String symbol) => ListView.builder(
-        itemCount: datosMonedas == null ? 0 : 10, //datosMonedas.length,
+        itemCount: datosMonedas == null ? 0 : 20, //datosMonedas.length,
         itemBuilder: (BuildContext context, int index) {
           return Container(
             margin: EdgeInsets.only(top: 0, bottom: 15),
@@ -111,31 +136,30 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               title: Text(
                 datosMonedas[index]['name'],
-                textAlign: TextAlign.center,
+                textAlign: TextAlign.left,
                 style: TextStyle(
                     color: Colors.indigo,
                     fontSize: 20,
                     fontWeight: FontWeight.w600),
               ),
               subtitle: Text(
-                roundDouble(datosMonedas[index]['quote']['USD']['price'],3)
+                roundDouble(datosMonedas[index]['quote']['USD']['price'], 3)
                     .toString(),
-                textAlign: TextAlign.center,
+                textAlign: TextAlign.left,
                 style: TextStyle(
                     color: Colors.blueAccent,
                     fontSize: 18,
                     fontWeight: FontWeight.w600),
               ),
+              trailing: Text(
+                  "MXN: ${roundDouble(priceDolar * datosMonedas[index]['quote']['USD']['price'], 3)} \n VOL 24h: ${roundDouble(datosMonedas[index]['quote']['USD']['volume_24h'], 0)} \n Chg 24h: ${roundDouble(datosMonedas[index]['quote']['USD']['percent_change_24h'], 2)}",
+                  textAlign: TextAlign.right,
+                  ),
+              //enabled: true,
             ),
           );
         },
       );
-
-  @override
-  void initState() {
-    super.initState();
-    buscarDatosWeb(d1, d2);
-  }
 
   var data1 = [0.0, 2.0, 3.5, -2.0, 0.5, 0.7, 0.8, 1.0, 2.0, 3.0, 3.2];
 
@@ -507,11 +531,29 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 Padding(
                   padding: const EdgeInsets.only(right: 8.0),
-                  child: myTextItems("Mktg. Spend", "48.6M"),
+                  child: FutureBuilder(
+                    future: getPriceCurrency("USD", "MXN"),
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      if (snapshot.hasError) print(snapshot.error);
+                      return snapshot.hasData
+                          ? myTextItems(
+                              "USD/MXN Price", snapshot.data.toString())
+                          : new CircularProgressIndicator();
+                    },
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(right: 8.0),
-                  child: myTextItems("Users", "25.5M"),
+                  child: FutureBuilder(
+                    future: getPriceCurrency("EUR", "MXN"),
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      if (snapshot.hasError) print(snapshot.error);
+                      return snapshot.hasData
+                          ? myTextItems(
+                              "EUR/MXN Price", snapshot.data.toString())
+                          : new CircularProgressIndicator();
+                    },
+                  ),
                 ),
               ],
               staggeredTiles: [
